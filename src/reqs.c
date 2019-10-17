@@ -1544,6 +1544,8 @@ void handle_connection (int fd)
         char peer_ipaddr[IP_LENGTH];
         char peer_string[HOSTNAME_LENGTH];
 
+	int ret;
+
         getpeer_information (fd, peer_ipaddr, peer_string);
 
         if (config.bindsame)
@@ -1578,6 +1580,19 @@ void handle_connection (int fd)
                                      "Server timeout waiting for the HTTP request "
                                      "from the client.", NULL);
                 goto fail;
+        }
+
+        if (!strncasecmp(connptr->request_line, "GET /ping ", 10)) {
+	        ret = write_message(
+		        connptr->client_fd,
+		        "HTTP/1.1 200 OK\r\n"
+		        "\r\n"
+	        );
+		if (ret < 0)
+			goto fail;
+
+	        shutdown (connptr->client_fd, SHUT_WR);
+	        goto done;
         }
 
         /*
